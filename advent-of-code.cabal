@@ -48,7 +48,7 @@ extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
 
 common warnings
-    ghc-options: -Wall
+    ghc-options: -Wall -O2 -threaded
 
 executable advent-of-code
     -- Import common warning flags.
@@ -58,7 +58,7 @@ executable advent-of-code
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: Utils.ParseLib D01.Main D02.Main D03.Main D04.Main D05.Main
+    other-modules: Utils.ParseLib D01.Main D02.Main D03.Main D04.Main D05.Main D06.Main
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -66,7 +66,7 @@ executable advent-of-code
     default-extensions: Arrows
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.20.0.0, parsec, transformers, mtl, universe-base, containers
+    build-depends:    base ^>=4.20.0.0, parsec, transformers, mtl, universe-base, containers, lens, parallel, deepseq-generics, deepseq
 
     -- Directories containing source files.
     hs-source-dirs:   app
