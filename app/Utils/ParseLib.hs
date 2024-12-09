@@ -3,7 +3,7 @@ import Text.Parsec (optionMaybe, many, optional, option, newline, endOfLine, man
 import Data.Maybe (maybeToList)
 import Data.Functor
 import Text.Parsec.String (GenParser)
-integer :: GenParser Char st Int
+integer :: Read i => Integral i => GenParser Char st i
 integer = do
   d <- many1 digit
   return $ read d
