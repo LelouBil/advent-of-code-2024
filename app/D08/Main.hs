@@ -56,11 +56,9 @@ antinodes maxrange xs =
         ( \((l, _), (r, _)) ->
             let dist@(V2 distx disty) = l - r
                 reducedDist = fmap (`div` abs (gcd distx disty)) dist
-                (redop, oppop) = if view _x reducedDist < 0 || view _y reducedDist < 0 then ((+), (-)) else ((-), (+))
-                lToBottom = takeWhile (inRange maxrange) [l `redop` (reducedDist * pure x) | x <- [0 ..]]
-                lToInfinite = takeWhile (inRange maxrange) [l `oppop` (reducedDist * pure x) | x <- [1 ..]]
-             in
-                lToBottom ++ lToInfinite
+                lToBottom = takeWhile (inRange maxrange) [l + (reducedDist * pure x) | x <- [0 ..]]
+                lToInfinite = takeWhile (inRange maxrange) [l - (reducedDist * pure x) | x <- [1 ..]]
+             in lToBottom ++ lToInfinite
         )
         crosslist
 
