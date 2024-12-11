@@ -1,5 +1,5 @@
 module Main where
-import D08.Main
+import D09.Main
 
 main :: IO ()
-main = D08.Main.main
+main = D09.Main.main
