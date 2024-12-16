@@ -1,17 +1,18 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TupleSections #-}
-
-module D09.Main (main) where
+module D09.Main (day) where
 
 import Data.Maybe (catMaybes, fromMaybe)
 import Debug.Trace (trace)
 import Text.Parsec (digit, endOfLine, many1, optionMaybe, parse)
 import Text.Parsec.String (GenParser)
 import Text.Printf (printf)
+import Utils.AOC (mkSolution, mkSolutionT)
+import Utils.Data (sndM)
 
 type FileID = Int
 
 type FileSize = Int
+
+type File = (FileID, FileSize)
 
 blockParser :: GenParser Char st (Int -> [Maybe Int])
 blockParser = do
@@ -42,25 +43,42 @@ defrag ls =
 
 type Disk = [((FileID, FileSize), FileSize)]
 
---defrag2 :: Disk -> Disk
-defrag2 ls =
-  let recdefrag :: Disk -> Disk -> [FileID] -> (Disk,[FileID])
-      recdefrag (((lid, lsize), lfree) : lxs) (((rid, rsize), rfree) : rxs) unmoved | rsize <= lfree = recdefrag (((lid, lsize), 0) : ((rid, rsize), lfree - rsize) : lxs) rxs unmoved
-      recdefrag ldisk@(((lid, lsize), lfree) : lxs) (((rid, rsize), rfree) : rxs) unmoved = recdefrag ldisk rxs (rid : unmoved)
-      recdefrag ldisk [] unmoved = (ldisk,unmoved)
-   in recdefrag ls (reverse ls) []
+removeFile :: FileID -> Disk -> Disk
+removeFile targetid (((fid, fsize), spacebefore) : (prev_file, emptyspacebefore) : fxs) | fid == targetid = (prev_file, emptyspacebefore + fsize + spacebefore) : fxs
+removeFile targetid (hf : fxs) = hf : removeFile targetid fxs
+removeFile _ [] = []
 
-main :: IO ()
-main = do
-  putStrLn "Day 9"
-  file <- readFile "app/D09/input"
-  let dat = parse fileParser2 "" file
-  case dat of
-    Left err -> do
-      print "erreur de parsing"
-      print err
-    Right val ->
-      do
-        --        let defragged = defrag val
-        --        let r = sum $ (uncurry ($)) <$> zip [(* i) | i <- [0 ..]] defragged
-        print $ defrag2 val
+defrag2 :: Disk -> Disk
+defrag2 ls =
+  let tryPlace :: Disk -> File -> Maybe Disk
+      tryPlace [] _ = Nothing
+      tryPlace ((prev_file, space_after) : fxs) new_file@(_, nf_size)
+        | nf_size <= space_after = Just ((prev_file, 0) : (new_file, space_after - nf_size) : fxs)
+      tryPlace (ff : fxs) trying_file = (ff :) <$> tryPlace fxs trying_file
+      recdefrag :: Disk -> Disk -> Disk
+      recdefrag main ((to_move, _) : tmxs) = recdefrag (fromMaybe main ((reverse . (removeFile $ fst to_move) . reverse) <$> tryPlace main to_move)) tmxs
+      recdefrag m [] = m
+   in recdefrag ls (reverse ls)
+
+showDisk :: Disk -> String
+showDisk [] = ""
+showDisk (((fid, fsize), ffree) : fxs) = (concat $ replicate fsize (show fid)) ++ (replicate ffree '.') ++ (showDisk fxs)
+
+checksum :: [Maybe Int] -> Int
+checksum disk = sum $ (uncurry ($)) <$> catMaybes (sndM <$> zip [(* i) | i <- [0 ..]] disk)
+
+expand :: Disk -> [Maybe Int]
+expand (((fid, fsize), ffree) : fxs) = (replicate fsize (Just fid)) ++ replicate ffree Nothing ++ expand fxs
+expand [] = []
+
+step1 :: [Maybe Int] -> IO Int
+step1 input = return $ checksum $ Just <$> defrag input
+
+step2 :: Disk -> IO Int
+step2 input = do
+  print $ showDisk $ input
+  let def = defrag2 input
+  print $ showDisk def
+  return $ checksum $ expand def
+
+day = mkSolution 9 (fileParser, step1) (fileParser2, step2)

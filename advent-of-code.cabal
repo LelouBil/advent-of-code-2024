@@ -58,15 +58,15 @@ executable advent-of-code
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: Utils.ParseLib D01.Main D02.Main D03.Main D04.Main D05.Main D06.Main D07.Main D08.Main D09.Main
+    other-modules: Utils.ParseLib Utils.Data Utils.AOC D01.Main D02.Main D03.Main D04.Main D05.Main D06.Main D07.Main D08.Main D09.Main D10.Main
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
-    default-extensions: Arrows
+    default-extensions: Arrows, LambdaCase, TemplateHaskell, TupleSections, DeriveGeneric
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.20.0.0, parsec, transformers, mtl, universe-base, containers, lens, parallel, deepseq-generics, deepseq, linear
+    build-depends:  base ^>=4.20.0.0, parsec, transformers, mtl, universe-base, containers, lens, parallel, deepseq-generics, deepseq, linear, directory, comonad
 
     -- Directories containing source files.
     hs-source-dirs:   app

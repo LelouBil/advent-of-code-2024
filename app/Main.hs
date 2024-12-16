@@ -1,5 +1,6 @@
 module Main where
-import D09.Main
+import D10.Main
+import Utils.AOC (runDay)
 
 main :: IO ()
-main = D09.Main.main
+main = runDay D10.Main.day
