@@ -29,12 +29,6 @@ charMapper =
         Just c -> head $ show c
     )
 
-testStencil :: Map2D Int
-testStencil = M.fromList [(V2 0 0, 8), (V2 1 0, 7)]
-
-boolShow :: Bool -> Char
-boolShow True = '#'
-boolShow False = '.'
 
 hikingTree :: Point -> Store Point (Maybe Int) -> Tree Point
 hikingTree start maps =

@@ -1,0 +1,7 @@
+
+source-repository-package
+    type: git
+    location: https://github.com/blamario/memoize
+    tag: b5071a8a73230ed51940d182d7830644b5aca7d8
+
+packages: .

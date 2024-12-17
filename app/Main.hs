@@ -1,13 +1,13 @@
 module Main where
 
 import Criterion.Main
-import D10.Main
+import D11.Main (day)
 import Utils.AOC (runDay, benchDay)
 
 
 main :: IO ()
 main = do
-  let today = D10.Main.day
+  let today = day
   putStrLn "Running"
   runDay today
   putStrLn "Benching"
