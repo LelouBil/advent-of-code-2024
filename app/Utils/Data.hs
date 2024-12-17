@@ -23,6 +23,7 @@ module Utils.Data
     mapFromStore,
     matchMap,
     storeMapNeighborhood,
+    ensureMaybe,
   )
 where
 
@@ -87,7 +88,7 @@ instance Direction HorizontalDirection where
 
 type ReadMapperFn a = Char -> Maybe a
 
-type ShowMapperFn a = a -> Char
+type ShowMapperFn a = Maybe a -> Char
 
 data CharMapper a = CharMapper {readMapper :: ReadMapperFn a, showMapper :: ShowMapperFn a}
 
@@ -110,7 +111,7 @@ instance ShowMappingProducer (ShowMapperFn a) a where
   toShowMapper = id
 
 mapFromList :: (Eq a) => [(Char, a)] -> CharMapper a
-mapFromList xs = CharMapper (flip lookup xs) (fromMaybe '?' . (flip lookup $ swap <$> xs))
+mapFromList xs = CharMapper (flip lookup xs) (fromMaybe '?' . (>>= (flip lookup) (swap <$> xs)))
 
 parse2DMap :: (ReadMappingProducer a b) => a -> GenParser Char st (Size, M.Map Point b)
 parse2DMap charMapper = do
@@ -120,7 +121,7 @@ parse2DMap charMapper = do
   return $ (V2 width height,) $ M.fromList $ catMaybes (sndM <$> second (toReadMapper charMapper) <$> rows)
 
 show2DMap :: (ShowMappingProducer a b) => a -> (Size, M.Map Point b) -> String
-show2DMap mapper (V2 width height, m) = unlines [[toShowMapper mapper $ (m ! V2 x y) | x <- [0 .. width - 1]] | y <- [0 .. height - 1]]
+show2DMap mapper (V2 width height, m) = unlines [[toShowMapper mapper $ ((V2 x y) `M.lookup` m) | x <- [0 .. width - 1]] | y <- [0 .. height - 1]]
 
 sndM :: (a, Maybe b) -> Maybe (a, b)
 sndM (a, Just b) = Just (a, b)
@@ -129,6 +130,12 @@ sndM (_, Nothing) = Nothing
 fstM :: (Maybe a, b) -> Maybe (a, b)
 fstM (Just a, b) = Just (a, b)
 fstM (Nothing, _) = Nothing
+
+ensureMaybe :: (a -> Bool) -> Maybe a -> Maybe a
+ensureMaybe f Nothing = Nothing
+ensureMaybe f (Just a)
+  | f a == True = Just a
+  | otherwise = Nothing
 
 mapToStore :: (Ord k, Num k) => M.Map k a -> Store k (Maybe a)
 mapToStore mp = store (`M.lookup` mp) 0

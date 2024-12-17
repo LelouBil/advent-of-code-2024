@@ -1,9 +1,11 @@
-module Utils.AOC (AOCDay, mkSolution, mkSolutionT, runDay, idParse) where
+module Utils.AOC (AOCDay, mkSolution, mkSolutionT, runDay, benchDay, idParse) where
 
 import Control.Exception
+import System.IO.Silently
 import Control.Monad.Except (liftEither)
 import Control.Monad.Trans (MonadIO (liftIO), MonadTrans (lift))
 import Control.Monad.Trans.Except
+import Criterion.Main (Benchmarkable, nfIO, whnfIO)
 import Data.Bifunctor (Bifunctor (first, second))
 import System.Directory
 import System.IO (readFile')
@@ -46,18 +48,29 @@ runDayInput day filePath = do
   liftIO $ putStrLn $ printf "Result : %s" (show b)
   return ()
 
+-- only run real
+benchDay :: (Show a) => (Show b) => AOCDay a b () i () ii -> Benchmarkable
+benchDay day = whnfIO $ silence $ do
+  putStrLn $ printf "BENCH -- Day %d" (num day)
+  putStrLn "Real File"
+  real_res <- runExceptT $ runDayInput day (printf "app/D%02d/input" (num day))
+  case real_res of
+    Left e -> putStrLn $ printf "Error : %s" (show e)
+    Right _ -> return ()
+
 runDay :: (Show a) => (Show b) => AOCDay a b () i () ii -> IO ()
 runDay day = do
-  putStrLn $ printf "TEST -- Day %d" (num day)
-  putStrLn "Test File"
+  putStrLn $ printf "Day %d" (num day)
+  putStrLn "-> Test File"
   test_res <- runExceptT $ runDayInput day (printf "app/D%02d/input_test" (num day))
   case test_res of
     Left e -> putStrLn $ printf "Error : %s" (show e)
     Right _ -> return ()
-  if real day then do
-      putStrLn "Real File"
+  if real day
+    then do
+      putStrLn "-> Real File"
       real_res <- runExceptT $ runDayInput day (printf "app/D%02d/input" (num day))
       case real_res of
         Left e -> putStrLn $ printf "Error : %s" (show e)
         Right _ -> return ()
-  else return ()
+    else return ()

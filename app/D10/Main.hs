@@ -1,41 +1,86 @@
 {-# LANGUAGE BlockArguments #-}
+
 module D10.Main (day) where
 
-import Utils.AOC (mkSolutionT)
-import Utils.Data (CharMapper (..), Map2D, Point, parse2DMap, show2DMap, matchMap, mapFromStore, mapToStore)
-import qualified Data.Map.Lazy as M
-import Text.Printf (printf)
-import Debug.Trace (trace)
 import Control.Comonad.Store
-import Linear (V2(V2))
+import qualified Data.Foldable as M
+import Data.List (nub)
+import qualified Data.Map.Lazy as M
+import Data.Maybe (catMaybes, fromMaybe)
+import Data.Monoid (All (All, getAll))
 import Data.Set (Set)
-import Data.Monoid (All(getAll, All))
+import Data.Tree (Tree, drawTree, foldTree, unfoldTree, unfoldTreeM)
+import Debug.Trace (trace)
+import Linear (V2 (V2))
+import Text.Parsec (char)
+import Text.Printf (printf)
+import Utils.AOC (mkSolution, mkSolutionT)
+import Utils.Data (CharMapper (..), Map2D, Point, ensureMaybe, mapFromStore, mapToStore, matchMap, parse2DMap, show2DMap)
 
 charMapper :: CharMapper Int
-charMapper = CharMapper (Just . read . pure) (head . show)
+charMapper =
+  CharMapper
+    ( \case
+        '.' -> Nothing
+        c -> Just $ read $ pure c
+    )
+    ( \case
+        Nothing -> '.'
+        Just c -> head $ show c
+    )
 
 testStencil :: Map2D Int
-testStencil = M.fromList [(V2 0 0,8),(V2 1 0,7)]
-
-
+testStencil = M.fromList [(V2 0 0, 8), (V2 1 0, 7)]
 
 boolShow :: Bool -> Char
 boolShow True = '#'
 boolShow False = '.'
 
+hikingTree :: Point -> Store Point (Maybe Int) -> Tree Point
+hikingTree start maps =
+  let neighbours = [V2 0 1, V2 1 0, V2 (-1) 0, V2 0 (-1)]
+      hike pt =
+        let pval = peek pt maps
+         in case pval of
+              Nothing -> (pt, [])
+              Just p ->
+                ( pt,
+                  filter
+                    ( \t ->
+                        fromMaybe False $ fmap (\v -> v - p == 1) (peek t maps)
+                    )
+                    $ (+ (pt))
+                      <$> neighbours
+                )
+   in unfoldTree hike start
+
+trailHeadScore :: Store Point (Maybe Int) -> Int
+trailHeadScore maps = length $ nub $ last <$> (paths (hikingTree (pos maps) maps))
+
+paths :: Tree Point -> [[Point]]
+paths tr =
+  let folder :: Point -> [[[Point]]] -> [[Point]]
+      folder a [] = [[a]]
+      folder a sub = concat $ fmap (fmap (a :)) sub
+   in filter (\x -> length x == 10) $ foldTree folder tr
+
 step1 :: (Point, Map2D Int) -> IO Int
 step1 (size, m) = do
   print size
---  print m
-  putStrLn $ show2DMap charMapper (size, m)
   let st = mapToStore m
-  print $ experiment (\x -> [x]) st
-  print $ matchMap m st
-  let r = extend (matchMap testStencil) st
-  -- turn r (StoreT Point Identity Bool) into a Map2D Bool
-  let rm = mapFromStore (M.keysSet m) r
-  putStrLn $ show2DMap boolShow (size, rm)
+  --  print $ hikingTree (V2 3 0) st
+  let hikeTree = extend trailHeadScore $ st
+  let ts = mapFromStore (M.keysSet m) hikeTree
+  --  putStrLn $ show2DMap charMapper (size, ts)
+  let trailSum = M.sum ts
+  return trailSum
 
-  return 0
+step2 :: (Point, Map2D Int) -> IO Int
+step2 (size, m) = do
+  let st = mapToStore m
+  let hikeTree = extend (\s -> length $ paths $ hikingTree (pos s) s) $ st
+  let ts = mapFromStore (M.keysSet m) hikeTree
+--  print ts
+  return $ M.sum ts
 
-day = mkSolutionT 10 (parse2DMap charMapper, step1) (parse2DMap charMapper, const $ return $ 0)
+day = mkSolution 10 (parse2DMap charMapper, step1) (parse2DMap charMapper, step2)

@@ -66,7 +66,7 @@ executable advent-of-code
     default-extensions: Arrows, LambdaCase, TemplateHaskell, TupleSections, DeriveGeneric
 
     -- Other library packages from which modules are imported.
-    build-depends:  base ^>=4.20.0.0, parsec, transformers, mtl, universe-base, containers, lens, parallel, deepseq-generics, deepseq, linear, directory, comonad
+    build-depends:  base ^>=4.20.0.0, parsec, transformers, mtl, universe-base, containers, lens, parallel, deepseq-generics, deepseq, linear, directory, comonad, criterion, silently
 
     -- Directories containing source files.
     hs-source-dirs:   app
