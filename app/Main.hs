@@ -1,7 +1,7 @@
 module Main where
 
 import Criterion.Main
-import D11.Main (day)
+import D12.Main (day)
 import Utils.AOC (runDay, benchDay)
 
 
